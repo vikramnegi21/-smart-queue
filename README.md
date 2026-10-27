@@ -7,7 +7,7 @@
 ---
 
 ## 🎯 Project Overview
-CarePoint is a full-stack, real-time hospital queue management platform engineered to eliminate physical waiting lines, optimize clinical workflows, and deliver live status updates for patients, doctors, and administrators.
+**CarePoint** is a full-stack, real-time hospital queue management platform engineered to eliminate physical waiting lines, optimize clinical workflows, and deliver live status updates for patients, doctors, and administrators. It ensures high performance using Redis caching and handles concurrent operations smoothly with secure session authentication and database-level checks.
 
 ---
 
