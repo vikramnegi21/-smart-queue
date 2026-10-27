@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CarePoint | Administration</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="/admin.html"><span class="brand-mark"></span>CarePoint <span class="muted" style="font-weight:400">Administration</span></a>
+      <div class="header-actions">
+        <span class="who" id="who"></span>
+        <button class="link-btn" id="signout">Sign out</button>
+      </div>
+    </div>
+  </header>
+  <main class="page wide">
+    <div class="shell">
+      <nav class="sidenav" aria-label="Sections">
+        <a href="#overview" data-s="overview">Overview</a>
+        <a href="#doctors" data-s="doctors">Doctors</a>
+        <a href="#add" data-s="add">Add a doctor</a>
+        <a href="/display.html" target="_blank" rel="noopener">Waiting-room display</a>
+      </nav>
+      <div id="content"><div class="skel"></div></div>
+    </div>
+  </main>
+
+  <script src="i18n.js"></script>
+  <script>
+    var content = document.getElementById('content');
+    var dash = null, doctors = [], hospitals = [], flash = null;
+
+    function ago(ts) {
+      var m = Math.round((Date.now() - ts) / 60000);
+      return m < 1 ? 'just now' : m < 60 ? m + ' min ago' : Math.round(m / 60) + ' h ago';
+    }
+    function statusBadge(s) {
+      var cls = { waiting: 'badge-info', in_progress: 'badge-warn', completed: 'badge-ok', no_show: 'badge-bad', cancelled: '' }[s] || '';
+      return '<span class="badge ' + cls + '">' + esc(s.replace('_', ' ')) + '</span>';
+    }
+
+    function bars(items, valueKey, labelFn) {
+      var max = Math.max.apply(null, items.map(function (i) { return i[valueKey]; }).concat([1]));
+      return '<div class="bars">' + items.map(function (i) {
+        var h = Math.round((i[valueKey] / max) * 100);
+        return '<div class="bar-col"><span class="bar-val num">' + (i[valueKey] || '') + '</span><div class="bar" style="height:' + h + '%"></div><span class="bar-lbl num">' + esc(labelFn(i)) + '</span></div>';
+      }).join('') + '</div>';
+    }
+
+    function viewOverview() {
+      var o = dash.overview, a = dash.analytics;
+      var hours = {};
+      a.hourly.forEach(function (h) { hours[h.hour] = h.tokens; });
+      var keys = Object.keys(hours).map(Number);
+      var from = Math.min.apply(null, keys.concat([8])), to = Math.max.apply(null, keys.concat([18]));
+      var series = [];
+      for (var h = from; h <= to; h++) series.push({ hour: h, tokens: hours[h] || 0 });
+
+      content.innerHTML =
+        '<h1 class="title">Overview</h1><p class="lead">Today\'s activity across all hospitals.</p>' +
+        '<div class="stats mt">' +
+          '<div class="stat"><div class="stat-label">Tokens today</div><div class="stat-value">' + o.tokens_today + '</div></div>' +
+          '<div class="stat"><div class="stat-label">Waiting now</div><div class="stat-value">' + o.waiting_now + '</div></div>' +
+          '<div class="stat"><div class="stat-label">Completed today</div><div class="stat-value">' + o.completed_today + '</div></div>' +
+          '<div class="stat"><div class="stat-label">Doctors</div><div class="stat-value">' + o.doctors + '</div></div>' +
+          '<div class="stat"><div class="stat-label">Avg. patient rating</div><div class="stat-value">' + (o.avg_rating == null ? '\u2013' : o.avg_rating + ' <span style="font-size:14px" class="muted">/ 5</span>') + '</div></div>' +
+        '</div>' +
+        '<section class="panel mt"><div class="panel-head"><h2>Tokens booked by hour</h2></div><div class="panel-body">' +
+          (o.tokens_today ? bars(series, 'tokens', function (s) { return s.hour; }) : '<div class="empty">No tokens booked yet today.</div>') + '</div></section>' +
+        '<section class="panel mt"><div class="panel-head"><h2>By hospital</h2></div><div class="table-wrap"><table class="table"><thead><tr><th>Hospital</th><th class="r">Tokens</th><th class="r">Completed</th></tr></thead><tbody>' +
+          a.perHospital.map(function (r) { return '<tr><td>' + esc(r.hospital) + '</td><td class="r num">' + r.tokens + '</td><td class="r num">' + r.completed + '</td></tr>'; }).join('') +
+        '</tbody></table></div></section>' +
+        '<section class="panel mt"><div class="panel-head"><h2>Doctors today</h2></div><div class="table-wrap"><table class="table"><thead><tr><th>Doctor</th><th>Hospital</th><th class="r">Tokens</th><th class="r">Completed</th><th class="r">Avg. consult (min)</th><th class="r">Rating</th></tr></thead><tbody>' +
+          a.doctors.map(function (d) {
+            return '<tr><td>' + esc(d.doctor) + '<div class="muted" style="font-size:12.5px">' + esc(d.department) + '</div></td><td>' + esc(d.hospital) + '</td><td class="r num">' + d.tokens + '</td><td class="r num">' + d.completed + '</td><td class="r num">' + (d.avg_consult_min == null ? '\u2013' : d.avg_consult_min) + '</td><td class="r num">' + (d.avg_rating == null ? '\u2013' : d.avg_rating) + '</td></tr>';
+          }).join('') +
+        '</tbody></table></div></section>' +
+        '<section class="panel mt"><div class="panel-head"><h2>Recent tokens</h2></div>' +
+          (dash.recent.length
+            ? '<div class="table-wrap"><table class="table"><thead><tr><th>Token</th><th>Patient</th><th>Doctor</th><th>Status</th><th>Booked</th></tr></thead><tbody>' +
+              dash.recent.map(function (r) {
+                return '<tr><td class="num">' + r.token_no + '</td><td>' + esc(r.patient) + '</td><td>' + esc(r.doctor) + '<div class="muted" style="font-size:12.5px">' + esc(r.hospital) + '</div></td><td>' + statusBadge(r.status) + '</td><td class="muted">' + esc(ago(r.created_at)) + '</td></tr>';
+              }).join('') + '</tbody></table></div>'
+            : '<div class="empty">No tokens yet.</div>') + '</section>';
+    }
+
+    function viewDoctors() {
+      content.innerHTML =
+        '<h1 class="title">Doctors</h1><p class="lead">' + doctors.length + ' accounts. Doctors cannot register themselves; accounts are created here.</p>' +
+        (flash ? '<div class="alert alert-ok" role="status">' + esc(flash) + '</div>' : '') +
+        '<section class="panel mt"><div class="table-wrap"><table class="table"><thead><tr><th>Doctor</th><th>Department</th><th>Hospital</th><th>User ID</th><th>Status</th></tr></thead><tbody>' +
+          doctors.map(function (d) {
+            var cls = d.status === 'available' ? 'badge-ok' : d.status === 'busy' ? 'badge-warn' : 'badge-bad';
+            return '<tr><td>' + esc(d.name) + '</td><td>' + esc(d.department) + '</td><td>' + esc(d.hospital_name) + '</td><td class="num">' + esc(d.username) + '</td><td><span class="badge ' + cls + '">' + esc(d.status) + '</span></td></tr>';
+          }).join('') + '</tbody></table></div></section>';
+      flash = null;
+    }
+
+    function viewAdd() {
+      var depts = {};
+      doctors.forEach(function (d) { depts[d.department] = true; });
+      content.innerHTML =
+        '<h1 class="title">Add a doctor</h1><p class="lead">The doctor signs in with the user ID and password you set here.</p>' +
+        '<form id="f" class="panel mt" novalidate><div class="panel-body">' +
+          '<div class="field"><label for="hospital">Hospital</label><select class="input" id="hospital">' +
+            hospitals.map(function (h) { return '<option value="' + h.id + '">' + esc(h.name) + '</option>'; }).join('') + '</select></div>' +
+          '<div class="grid-2">' +
+            '<div class="field"><label for="name">Doctor name</label><input class="input" id="name" placeholder="Dr. Kapoor"></div>' +
+            '<div class="field"><label for="dept">Department</label><input class="input" id="dept" list="deptlist" placeholder="Cardiology"><datalist id="deptlist">' +
+              Object.keys(depts).map(function (d) { return '<option value="' + esc(d) + '">'; }).join('') + '</datalist></div>' +
+            '<div class="field"><label for="user">User ID</label><input class="input" id="user" autocomplete="off" placeholder="kapoor"><div class="hint">3 to 20 characters: letters, numbers, dot, dash, underscore.</div></div>' +
+            '<div class="field"><label for="pass">Temporary password</label><input class="input" id="pass" type="text" autocomplete="off" placeholder="At least 6 characters"></div>' +
+            '<div class="field"><label for="avg">Average minutes per patient</label><input class="input" id="avg" inputmode="numeric" value="8"></div>' +
+          '</div>' +
+          '<div id="err" class="alert alert-bad hide" role="alert"></div>' +
+          '<div class="actions"><button class="btn btn-primary" id="save" type="submit">Create account</button></div>' +
+        '</div></form>';
+      document.getElementById('f').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var btn = document.getElementById('save');
+        btn.disabled = true;
+        var r = await api('POST', '/api/hospitaladmin/doctors', {
+          hospital_id: document.getElementById('hospital').value,
+          name: document.getElementById('name').value,
+          department: document.getElementById('dept').value,
+          username: document.getElementById('user').value,
+          password: document.getElementById('pass').value,
+          avg_consult_minutes: document.getElementById('avg').value,
+        });
+        if (!r.ok) {
+          btn.disabled = false;
+          var err = document.getElementById('err');
+          err.textContent = r.data.error; err.classList.remove('hide');
+          return;
+        }
+        flash = r.data.doctor.name + ' was added. They can sign in with user ID "' + r.data.doctor.username + '".';
+        await loadAll();
+        location.hash = '#doctors';
+      });
+    }
+
+    function route() {
+      var s = (location.hash || '#overview').slice(1);
+      if (!{ overview: 1, doctors: 1, add: 1 }[s]) s = 'overview';
+      Array.prototype.forEach.call(document.querySelectorAll('.sidenav a[data-s]'), function (a) {
+        if (a.getAttribute('data-s') === s) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+      });
+      if (!dash) return;
+      if (s === 'overview') viewOverview(); else if (s === 'doctors') viewDoctors(); else viewAdd();
+    }
+
+    async function loadAll() {
+      var results = await Promise.all([api('GET', '/api/hospitaladmin/dashboard'), api('GET', '/api/hospitaladmin/doctors'), api('GET', '/api/hospitals')]);
+      if (results.some(function (r) { return r.status === 401; })) { location.href = '/'; return; }
+      dash = results[0].data; doctors = results[1].data; hospitals = results[2].data;
+      route();
+    }
+
+    document.getElementById('signout').onclick = async function () { await api('POST', '/api/hospitaladmin/logout'); location.href = '/'; };
+    window.addEventListener('hashchange', route);
+
+    (async function () {
+      var me = await api('GET', '/api/hospitaladmin/me');
+      if (me.status === 401) { location.href = '/'; return; }
+      document.getElementById('who').textContent = me.data.name;
+      await loadAll();
+    })();
+  </script>
+</body>
+</html>

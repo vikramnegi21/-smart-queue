@@ -1,0 +1,22 @@
+{
+  "name": "carepoint",
+  "version": "2.0.0",
+  "description": "Smart hospital queue management system (DBMS project)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --no-warnings server.js",
+    "test": "node --no-warnings test/smoke.js",
+    "demo-data": "node --no-warnings scripts/demo-data.js",
+    "reset": "node scripts/reset.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "express": "^4.19.2",
+    "express-session": "^1.19.0",
+    "ioredis": "^6.0.0",
+    "socket.io": "^4.7.5"
+  }
+}

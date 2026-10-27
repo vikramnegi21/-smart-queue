@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="900" viewBox="0 0 1000 900" font-family="Inter, Segoe UI, Arial, sans-serif">
+<rect width="1000" height="900" fill="#FFFFFF"/>
+<text x="40" y="34" font-size="18" font-weight="700" fill="#16191F">CarePoint: entity relationship diagram</text>
+<line x1="280" y1="100" x2="380" y2="100" stroke="#4B5563" stroke-width="1.5"/>
+<text x="292" y="92" font-size="13" font-weight="700" fill="#14558F" text-anchor="middle">1</text>
+<text x="370" y="92" font-size="13" font-weight="700" fill="#14558F" text-anchor="middle">N</text>
+<line x1="620" y1="100" x2="720" y2="100" stroke="#4B5563" stroke-width="1.5"/>
+<text x="630" y="92" font-size="13" font-weight="700" fill="#14558F" text-anchor="middle">N</text>
+<text x="710" y="92" font-size="13" font-weight="700" fill="#14558F" text-anchor="middle">1</text>
+<line x1="500" y1="128" x2="500" y2="270" stroke="#4B5563" stroke-width="1.5"/>
+<text x="512" y="148" font-size="13" font-weight="700" fill="#14558F" text-anchor="middle">1</text>
+<text x="512" y="262" font-size="13" font-weight="700" fill="#14558F" text-anchor="middle">N</text>
+<line x1="500" y1="458" x2="500" y2="540" stroke="#4B5563" stroke-width="1.5"/>
+<text x="512" y="474" font-size="13" font-weight="700" fill="#14558F" text-anchor="middle">1</text>
+<text x="512" y="532" font-size="13" font-weight="700" fill="#14558F" text-anchor="middle">N</text>
+<line x1="280" y1="600" x2="380" y2="600" stroke="#4B5563" stroke-width="1.5"/>
+<text x="292" y="592" font-size="13" font-weight="700" fill="#14558F" text-anchor="middle">1</text>
+<text x="370" y="592" font-size="13" font-weight="700" fill="#14558F" text-anchor="middle">N</text>
+<line x1="620" y1="600" x2="720" y2="600" stroke="#4B5563" stroke-width="1.5"/>
+<text x="630" y="592" font-size="13" font-weight="700" fill="#14558F" text-anchor="middle">1</text>
+<text x="714" y="592" font-size="13" font-weight="700" fill="#14558F" text-anchor="end">0..1</text>
+<rect x="40" y="60" width="240" height="108" fill="#FFFFFF" stroke="#4B5563" stroke-width="1.5" rx="3"/>
+<rect x="40" y="60" width="240" height="28" fill="#14558F" rx="3"/>
+<rect x="40" y="84" width="240" height="4" fill="#14558F"/>
+<text x="52" y="79" font-size="14" font-weight="700" fill="#FFFFFF">hospitals</text>
+<text x="52" y="102" font-size="12.5" fill="#16191F" font-weight="700">hospital_id</text>
+<text x="268" y="102" font-size="11" fill="#6B7280" text-anchor="end">PK</text>
+<text x="52" y="122" font-size="12.5" fill="#16191F">name</text>
+<text x="268" y="122" font-size="11" fill="#6B7280" text-anchor="end">UQ</text>
+<text x="52" y="142" font-size="12.5" fill="#16191F">distance_km</text>
+<text x="52" y="162" font-size="12.5" fill="#16191F">rating</text>
+<rect x="380" y="60" width="240" height="68" fill="#FFFFFF" stroke="#4B5563" stroke-width="1.5" rx="3"/>
+<rect x="380" y="60" width="240" height="28" fill="#14558F" rx="3"/>
+<rect x="380" y="84" width="240" height="4" fill="#14558F"/>
+<text x="392" y="79" font-size="14" font-weight="700" fill="#FFFFFF">hospital_departments</text>
+<text x="392" y="102" font-size="12.5" fill="#16191F" font-weight="700">hospital_id</text>
+<text x="608" y="102" font-size="11" fill="#6B7280" text-anchor="end">PK FK</text>
+<text x="392" y="122" font-size="12.5" fill="#16191F" font-weight="700">department_id</text>
+<text x="608" y="122" font-size="11" fill="#6B7280" text-anchor="end">PK FK</text>
+<rect x="720" y="60" width="240" height="68" fill="#FFFFFF" stroke="#4B5563" stroke-width="1.5" rx="3"/>
+<rect x="720" y="60" width="240" height="28" fill="#14558F" rx="3"/>
+<rect x="720" y="84" width="240" height="4" fill="#14558F"/>
+<text x="732" y="79" font-size="14" font-weight="700" fill="#FFFFFF">departments</text>
+<text x="732" y="102" font-size="12.5" fill="#16191F" font-weight="700">department_id</text>
+<text x="948" y="102" font-size="11" fill="#6B7280" text-anchor="end">PK</text>
+<text x="732" y="122" font-size="12.5" fill="#16191F">name</text>
+<text x="948" y="122" font-size="11" fill="#6B7280" text-anchor="end">UQ</text>
+<rect x="40" y="270" width="240" height="108" fill="#FFFFFF" stroke="#4B5563" stroke-width="1.5" rx="3"/>
+<rect x="40" y="270" width="240" height="28" fill="#14558F" rx="3"/>
+<rect x="40" y="294" width="240" height="4" fill="#14558F"/>
+<text x="52" y="289" font-size="14" font-weight="700" fill="#FFFFFF">otps</text>
+<text x="52" y="312" font-size="12.5" fill="#16191F" font-weight="700">mobile</text>
+<text x="268" y="312" font-size="11" fill="#6B7280" text-anchor="end">PK</text>
+<text x="52" y="332" font-size="12.5" fill="#16191F">code</text>
+<text x="52" y="352" font-size="12.5" fill="#16191F">expires_at</text>
+<text x="52" y="372" font-size="12.5" fill="#16191F">attempts</text>
+<rect x="380" y="270" width="240" height="188" fill="#FFFFFF" stroke="#4B5563" stroke-width="1.5" rx="3"/>
+<rect x="380" y="270" width="240" height="28" fill="#14558F" rx="3"/>
+<rect x="380" y="294" width="240" height="4" fill="#14558F"/>
+<text x="392" y="289" font-size="14" font-weight="700" fill="#FFFFFF">doctors</text>
+<text x="392" y="312" font-size="12.5" fill="#16191F" font-weight="700">doctor_id</text>
+<text x="608" y="312" font-size="11" fill="#6B7280" text-anchor="end">PK</text>
+<text x="392" y="332" font-size="12.5" fill="#16191F">hospital_id</text>
+<text x="608" y="332" font-size="11" fill="#6B7280" text-anchor="end">FK</text>
+<text x="392" y="352" font-size="12.5" fill="#16191F">department_id</text>
+<text x="608" y="352" font-size="11" fill="#6B7280" text-anchor="end">FK</text>
+<text x="392" y="372" font-size="12.5" fill="#16191F">name</text>
+<text x="392" y="392" font-size="12.5" fill="#16191F">username</text>
+<text x="608" y="392" font-size="11" fill="#6B7280" text-anchor="end">UQ</text>
+<text x="392" y="412" font-size="12.5" fill="#16191F">password_hash</text>
+<text x="392" y="432" font-size="12.5" fill="#16191F">status</text>
+<text x="392" y="452" font-size="12.5" fill="#16191F">avg_consult_minutes</text>
+<rect x="720" y="270" width="240" height="108" fill="#FFFFFF" stroke="#4B5563" stroke-width="1.5" rx="3"/>
+<rect x="720" y="270" width="240" height="28" fill="#14558F" rx="3"/>
+<rect x="720" y="294" width="240" height="4" fill="#14558F"/>
+<text x="732" y="289" font-size="14" font-weight="700" fill="#FFFFFF">admins</text>
+<text x="732" y="312" font-size="12.5" fill="#16191F" font-weight="700">admin_id</text>
+<text x="948" y="312" font-size="11" fill="#6B7280" text-anchor="end">PK</text>
+<text x="732" y="332" font-size="12.5" fill="#16191F">name</text>
+<text x="732" y="352" font-size="12.5" fill="#16191F">username</text>
+<text x="948" y="352" font-size="11" fill="#6B7280" text-anchor="end">UQ</text>
+<text x="732" y="372" font-size="12.5" fill="#16191F">password_hash</text>
+<rect x="40" y="540" width="240" height="128" fill="#FFFFFF" stroke="#4B5563" stroke-width="1.5" rx="3"/>
+<rect x="40" y="540" width="240" height="28" fill="#14558F" rx="3"/>
+<rect x="40" y="564" width="240" height="4" fill="#14558F"/>
+<text x="52" y="559" font-size="14" font-weight="700" fill="#FFFFFF">patients</text>
+<text x="52" y="582" font-size="12.5" fill="#16191F" font-weight="700">patient_id</text>
+<text x="268" y="582" font-size="11" fill="#6B7280" text-anchor="end">PK</text>
+<text x="52" y="602" font-size="12.5" fill="#16191F">mobile</text>
+<text x="268" y="602" font-size="11" fill="#6B7280" text-anchor="end">UQ</text>
+<text x="52" y="622" font-size="12.5" fill="#16191F">no_show_count</text>
+<text x="52" y="642" font-size="12.5" fill="#16191F">is_blocked</text>
+<text x="52" y="662" font-size="12.5" fill="#16191F">created_at</text>
+<rect x="380" y="540" width="240" height="308" fill="#FFFFFF" stroke="#4B5563" stroke-width="1.5" rx="3"/>
+<rect x="380" y="540" width="240" height="28" fill="#14558F" rx="3"/>
+<rect x="380" y="564" width="240" height="4" fill="#14558F"/>
+<text x="392" y="559" font-size="14" font-weight="700" fill="#FFFFFF">tokens</text>
+<text x="392" y="582" font-size="12.5" fill="#16191F" font-weight="700">token_id</text>
+<text x="608" y="582" font-size="11" fill="#6B7280" text-anchor="end">PK</text>
+<text x="392" y="602" font-size="12.5" fill="#16191F">token_no</text>
+<text x="392" y="622" font-size="12.5" fill="#16191F">token_date</text>
+<text x="392" y="642" font-size="12.5" fill="#16191F">patient_id</text>
+<text x="608" y="642" font-size="11" fill="#6B7280" text-anchor="end">FK</text>
+<text x="392" y="662" font-size="12.5" fill="#16191F">doctor_id</text>
+<text x="608" y="662" font-size="11" fill="#6B7280" text-anchor="end">FK</text>
+<text x="392" y="682" font-size="12.5" fill="#16191F">patient_name</text>
+<text x="392" y="702" font-size="12.5" fill="#16191F">age</text>
+<text x="392" y="722" font-size="12.5" fill="#16191F">gender</text>
+<text x="392" y="742" font-size="12.5" fill="#16191F">reason</text>
+<text x="392" y="762" font-size="12.5" fill="#16191F">visit_type</text>
+<text x="392" y="782" font-size="12.5" fill="#16191F">status</text>
+<text x="392" y="802" font-size="12.5" fill="#16191F">created_at</text>
+<text x="392" y="822" font-size="12.5" fill="#16191F">called_at</text>
+<text x="392" y="842" font-size="12.5" fill="#16191F">completed_at</text>
+<rect x="720" y="540" width="240" height="108" fill="#FFFFFF" stroke="#4B5563" stroke-width="1.5" rx="3"/>
+<rect x="720" y="540" width="240" height="28" fill="#14558F" rx="3"/>
+<rect x="720" y="564" width="240" height="4" fill="#14558F"/>
+<text x="732" y="559" font-size="14" font-weight="700" fill="#FFFFFF">feedback</text>
+<text x="732" y="582" font-size="12.5" fill="#16191F" font-weight="700">token_id</text>
+<text x="948" y="582" font-size="11" fill="#6B7280" text-anchor="end">PK FK</text>
+<text x="732" y="602" font-size="12.5" fill="#16191F">rating</text>
+<text x="732" y="622" font-size="12.5" fill="#16191F">comment</text>
+<text x="732" y="642" font-size="12.5" fill="#16191F">created_at</text>
+<text x="720" y="400" font-size="12" fill="#6B7280">admins and otps have no relationships:</text>
+<text x="720" y="416" font-size="12" fill="#6B7280">they are looked up by username / mobile.</text>
+<text x="40" y="880" font-size="12" fill="#6B7280">PK primary key   FK foreign key   UQ unique.   doctors(hospital_id, department_id) is a composite FK to hospital_departments.</text>
+</svg>

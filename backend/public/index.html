@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CarePoint | Sign in</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="/"><span class="brand-mark"></span>CarePoint</a>
+      <div id="lang"></div>
+    </div>
+  </header>
+
+  <div class="auth">
+    <aside class="auth-side" id="side"></aside>
+    <main class="auth-main">
+      <div class="auth-card" id="view"></div>
+      <p class="foot-link"><a href="/display.html" id="boardLink"></a></p>
+    </main>
+  </div>
+
+  <script src="i18n.js"></script>
+  <script>
+    var view = document.getElementById('view');
+    var step = 'identify';
+    var ctx = {};          // data carried between steps: identifier, role, otp details
+    var timer = null;
+
+    function renderSide() {
+      document.getElementById('side').innerHTML =
+        '<h2>' + esc(t('sideTitle')) + '</h2>' +
+        '<p>' + esc(t('side1')) + '</p><p>' + esc(t('side2')) + '</p><p>' + esc(t('side3')) + '</p>';
+      document.getElementById('boardLink').textContent = t('boardLink');
+    }
+
+    function render() {
+      clearInterval(timer);
+      renderSide();
+      if (step === 'identify') viewIdentify();
+      else if (step === 'otp') viewOtp();
+      else viewPassword();
+    }
+    window.onLangChange = render;
+    mountLangSwitch(document.getElementById('lang'));
+
+    function showError(msg) {
+      var el = document.getElementById('err');
+      el.textContent = msg;
+      el.classList.remove('hide');
+    }
+
+    // ---------------- step 1: who are you
+    function viewIdentify() {
+      view.innerHTML =
+        '<h1 class="title">' + esc(t('signInTitle')) + '</h1>' +
+        '<p class="lead">' + esc(t('signInLead')) + '</p>' +
+        '<form id="f" class="mt" novalidate>' +
+          '<div class="field"><label for="idv">' + esc(t('idLabel')) + '</label>' +
+            '<input class="input" id="idv" autocomplete="username" inputmode="text" placeholder="' + esc(t('idPlaceholder')) + '" value="' + esc(ctx.identifier || '') + '">' +
+            '<div class="hint">' + esc(t('idHint')) + '</div></div>' +
+          '<div id="err" class="alert alert-bad hide" role="alert"></div>' +
+          '<button class="btn btn-primary btn-block mt-s" id="go" type="submit">' + esc(t('continue')) + '</button>' +
+        '</form>';
+      var input = document.getElementById('idv');
+      input.focus();
+      document.getElementById('f').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var raw = input.value.trim();
+        var identifier = /^[\d\s-]+$/.test(raw) ? raw.replace(/[\s-]/g, '') : raw;
+        var btn = document.getElementById('go');
+        btn.disabled = true;
+        var r = await api('POST', '/api/identify', { identifier: identifier });
+        btn.disabled = false;
+        if (!r.ok) return showError(r.data.error);
+        ctx = { identifier: identifier, role: r.data.type };
+        if (r.data.type === 'patient') startOtp();
+        else { step = 'password'; render(); }
+      });
+    }
+
+    // ---------------- step 2a: patient one-time code
+    async function startOtp() {
+      var r = await api('POST', '/api/send-otp', { mobile: ctx.identifier });
+      if (!r.ok) { step = 'identify'; render(); return showError(r.data.error); }
+      ctx.demo = r.data.demo_otp;
+      ctx.resendAt = Date.now() + 30000;
+      step = 'otp';
+      render();
+    }
+
+    function viewOtp() {
+      view.innerHTML =
+        '<h1 class="title">' + esc(t('otpTitle')) + '</h1>' +
+        '<p class="lead">' + esc(t('otpLead')) + ' <strong class="num">' + esc(ctx.identifier) + '</strong></p>' +
+        (ctx.demo ? '<div class="alert alert-info">' + esc(t('otpDemo')) + ' <strong class="num">' + esc(ctx.demo) + '</strong></div>' : '') +
+        '<form id="f" class="mt" novalidate>' +
+          '<div class="otp" id="boxes">' +
+            [0, 1, 2, 3].map(function (i) {
+              return '<input class="input num" inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Digit ' + (i + 1) + '" data-i="' + i + '">';
+            }).join('') +
+          '</div>' +
+          '<div id="err" class="alert alert-bad hide" role="alert"></div>' +
+          '<button class="btn btn-primary btn-block mt" id="go" type="submit">' + esc(t('verify')) + '</button>' +
+        '</form>' +
+        '<p class="mt-s muted" id="resend"></p>' +
+        '<p class="mt-s"><button class="link-btn" id="change">' + esc(t('changeNumber')) + '</button></p>';
+
+      var boxes = Array.prototype.slice.call(document.querySelectorAll('#boxes input'));
+      boxes.forEach(function (b, i) {
+        b.addEventListener('input', function () {
+          b.value = b.value.replace(/\D/g, '').slice(-1);
+          if (b.value && boxes[i + 1]) boxes[i + 1].focus();
+        });
+        b.addEventListener('keydown', function (e) {
+          if (e.key === 'Backspace' && !b.value && boxes[i - 1]) boxes[i - 1].focus();
+        });
+        b.addEventListener('paste', function (e) {
+          var digits = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, 4);
+          if (!digits) return;
+          e.preventDefault();
+          digits.split('').forEach(function (d, k) { boxes[k].value = d; });
+          boxes[Math.min(digits.length, 3)].focus();
+        });
+      });
+      boxes[0].focus();
+
+      document.getElementById('change').onclick = function () { step = 'identify'; render(); };
+
+      function tick() {
+        var left = Math.max(0, Math.ceil((ctx.resendAt - Date.now()) / 1000));
+        var el = document.getElementById('resend');
+        if (!el) return;
+        if (left > 0) {
+          el.textContent = t('resendIn') + ' ' + left + ' ' + t('seconds');
+        } else {
+          clearInterval(timer);
+          el.innerHTML = '<button class="link-btn" id="again">' + esc(t('resend')) + '</button>';
+          document.getElementById('again').onclick = startOtp;
+        }
+      }
+      tick();
+      timer = setInterval(tick, 1000);
+
+      document.getElementById('f').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var otp = boxes.map(function (b) { return b.value; }).join('');
+        if (otp.length < 4) return showError(t('codeIncomplete'));
+        var btn = document.getElementById('go');
+        btn.disabled = true;
+        var r = await api('POST', '/api/verify-otp', { mobile: ctx.identifier, otp: otp });
+        if (!r.ok) { btn.disabled = false; return showError(r.data.error); }
+        window.location.href = '/patient.html';
+      });
+    }
+
+    // ---------------- step 2b: doctor / administrator password
+    function viewPassword() {
+      var isAdmin = ctx.role === 'admin';
+      view.innerHTML =
+        '<h1 class="title">' + esc(t(isAdmin ? 'adminSignIn' : 'doctorSignIn')) + '</h1>' +
+        '<form id="f" class="mt" novalidate>' +
+          '<div class="field"><label for="uid">' + esc(t('userId')) + '</label>' +
+            '<input class="input" id="uid" value="' + esc(ctx.identifier) + '" readonly></div>' +
+          '<div class="field"><label for="pw">' + esc(t('password')) + '</label>' +
+            '<input class="input" id="pw" type="password" autocomplete="current-password"></div>' +
+          '<div id="err" class="alert alert-bad hide" role="alert"></div>' +
+          '<button class="btn btn-primary btn-block mt-s" id="go" type="submit">' + esc(t('signInBtn')) + '</button>' +
+        '</form>' +
+        '<p class="mt-s"><button class="link-btn" id="change">' + esc(t('otherId')) + '</button></p>';
+      document.getElementById('pw').focus();
+      document.getElementById('change').onclick = function () { step = 'identify'; render(); };
+      document.getElementById('f').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var btn = document.getElementById('go');
+        btn.disabled = true;
+        var url = isAdmin ? '/api/hospitaladmin/login' : '/api/doctor/login';
+        var r = await api('POST', url, { username: ctx.identifier, password: document.getElementById('pw').value });
+        if (!r.ok) { btn.disabled = false; return showError(r.data.error); }
+        window.location.href = isAdmin ? '/admin.html' : '/doctor.html';
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>

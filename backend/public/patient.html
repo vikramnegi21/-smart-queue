@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CarePoint</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="/patient.html"><span class="brand-mark"></span>CarePoint</a>
+      <div class="header-actions">
+        <div id="lang"></div>
+        <button class="link-btn" id="signout"></button>
+      </div>
+    </div>
+  </header>
+  <main class="page" id="app"></main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="i18n.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

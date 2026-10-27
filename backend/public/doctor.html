@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CarePoint | Doctor</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="brand" href="/doctor.html"><span class="brand-mark"></span>CarePoint</a>
+      <div class="header-actions">
+        <span class="who" id="who"></span>
+        <button class="link-btn" id="signout">Sign out</button>
+      </div>
+    </div>
+  </header>
+  <main class="page wide" id="app"><div class="skel"></div></main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="i18n.js"></script>
+  <script>
+    var app = document.getElementById('app');
+    var data = null;
+    var pending = false;
+    var message = null;
+
+    function age(p) { return p.age + ' / ' + p.gender.charAt(0); }
+    function waited(m) { return m < 1 ? 'just now' : m + ' min'; }
+
+    function currentPanel() {
+      var p = data.current_patient;
+      var queueEmpty = data.queue.length === 0;
+      if (!p) {
+        return '<section class="panel"><div class="panel-head"><h2>Current patient</h2></div>' +
+          '<div class="empty">No patient with you right now.</div>' +
+          '<div class="panel-body" style="padding-top:0"><button class="btn btn-primary btn-block" id="next"' + (queueEmpty || pending ? ' disabled' : '') + '>Call next patient</button></div></section>';
+      }
+      return '<section class="panel"><div class="panel-head"><h2>Current patient</h2><span class="badge badge-ok">Token ' + p.token_no + '</span></div>' +
+        '<div class="row" style="padding:18px 20px 4px"><span class="avatar">' + esc(p.name.split(/\s+/).map(function (w) { return w[0]; }).join('').slice(0, 2).toUpperCase()) + '</span>' +
+        '<div><div style="font-weight:600;font-size:16px">' + esc(p.name) + '</div><div class="muted">' + esc(p.age) + ' years, ' + esc(p.gender) + '</div></div></div>' +
+        '<dl class="kv" style="padding-top:8px">' +
+          '<div class="kv-row"><dt>Reason for visit</dt><dd style="max-width:60%">' + (p.reason ? esc(p.reason) : '<span class="muted">Not given</span>') + '</dd></div>' +
+          '<div class="kv-row"><dt>Visit type</dt><dd>' + esc(p.visit_type) + '</dd></div>' +
+          '<div class="kv-row"><dt>Waited</dt><dd>' + esc(waited(p.waiting_minutes)) + '</dd></div>' +
+        '</dl>' +
+        '<div class="panel-body row" style="padding-top:8px">' +
+          '<button class="btn btn-primary" id="next"' + (pending ? ' disabled' : '') + ' style="flex:1">' + (queueEmpty ? 'Complete consultation' : 'Complete and call next') + '</button>' +
+          '<button class="btn btn-danger" id="noshow"' + (pending ? ' disabled' : '') + '>Did not arrive</button>' +
+        '</div></section>';
+    }
+
+    function queuePanel() {
+      var rows = data.queue.map(function (q) {
+        return '<tr><td class="num"><strong>' + q.token_no + '</strong></td><td>' + esc(q.name) + '</td><td class="num">' + esc(age(q)) + '</td>' +
+          '<td>' + (q.reason ? esc(q.reason) : '<span class="muted">-</span>') + '</td><td>' + esc(q.visit_type) + '</td><td class="num">' + esc(waited(q.waiting_minutes)) + '</td></tr>';
+      }).join('');
+      return '<section class="panel"><div class="panel-head"><h2>Waiting queue</h2><span class="muted num">' + data.queue.length + ' waiting</span></div>' +
+        (rows
+          ? '<div class="table-wrap"><table class="table"><thead><tr><th>Token</th><th>Patient</th><th>Age / sex</th><th>Reason</th><th>Visit</th><th>Waiting</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+          : '<div class="empty">Nobody is waiting.</div>') + '</section>';
+    }
+
+    function render() {
+      var d = data.doctor, s = data.stats;
+      document.getElementById('who').textContent = d.name + ' \u00B7 ' + d.hospital_name;
+      var today = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+      var status = [['available', 'Available'], ['busy', 'Busy'], ['leave', 'On leave']].map(function (o) {
+        return '<button type="button" data-s="' + o[0] + '" aria-pressed="' + (d.status === o[0]) + '">' + o[1] + '</button>';
+      }).join('');
+      app.innerHTML =
+        '<div class="row between wrap"><div><h1 class="title">' + esc(d.department) + '</h1><p class="lead">' + esc(today) + '</p></div>' +
+          '<div class="seg" id="status" role="group" aria-label="Your status">' + status + '</div></div>' +
+        (message ? '<div class="alert alert-' + message.kind + '" role="status">' + esc(message.text) + '</div>' : '') +
+        '<div class="stats mt">' +
+          '<div class="stat"><div class="stat-label">Now serving</div><div class="stat-value">' + (data.current_serving || '\u2013') + '</div></div>' +
+          '<div class="stat"><div class="stat-label">Waiting</div><div class="stat-value">' + s.waiting + '</div></div>' +
+          '<div class="stat"><div class="stat-label">Seen today</div><div class="stat-value">' + s.seen + '</div></div>' +
+          '<div class="stat"><div class="stat-label">Did not arrive</div><div class="stat-value">' + s.no_show + '</div></div>' +
+          '<div class="stat"><div class="stat-label">Avg. consultation</div><div class="stat-value">' + (s.avg_consult_min == null ? '\u2013' : s.avg_consult_min + ' <span style="font-size:14px;font-weight:500" class="muted">min</span>') + '</div></div>' +
+        '</div>' +
+        '<div class="split mt">' + currentPanel() + queuePanel() + '</div>';
+
+      var next = document.getElementById('next'), noshow = document.getElementById('noshow');
+      if (next) next.onclick = function () { act('/api/doctor/next'); };
+      if (noshow) noshow.onclick = function () { if (confirm('Mark this patient as not arrived?')) act('/api/doctor/no-show'); };
+      Array.prototype.forEach.call(document.querySelectorAll('#status button'), function (b) {
+        b.onclick = async function () { await api('POST', '/api/doctor/status', { status: b.getAttribute('data-s') }); message = null; load(); };
+      });
+    }
+
+    async function act(url) {
+      if (pending) return;          // a double click must never skip a patient
+      pending = true; render();
+      var r = await api('POST', url);
+      pending = false;
+      message = r.ok ? (r.data.called ? { kind: 'info', text: 'Token ' + r.data.called + ' called.' } : { kind: 'info', text: 'No one is waiting.' })
+                     : { kind: 'bad', text: r.data.error };
+      load();
+    }
+
+    async function load() {
+      var r = await api('GET', '/api/doctor/queue-summary');
+      if (r.status === 401) { location.href = '/'; return; }
+      if (!r.ok) { app.innerHTML = '<div class="alert alert-bad">' + esc(r.data.error) + '</div>'; return; }
+      data = r.data;
+      render();
+    }
+
+    document.getElementById('signout').onclick = async function () { await api('POST', '/api/doctor/logout'); location.href = '/'; };
+
+    (async function () {
+      var me = await api('GET', '/api/doctor/me');
+      if (me.status === 401) { location.href = '/'; return; }
+      await load();
+      if (typeof io === 'function') {
+        var socket = io();
+        socket.on('connect', function () { socket.emit('subscribe', me.data.id); });
+        socket.on('queue:update', load);
+      }
+      setInterval(load, 20000);
+    })();
+  </script>
+</body>
+</html>

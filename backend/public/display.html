@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CarePoint | Now serving</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { background: #0F2D4A; color: #fff; }
+    .board-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 32px; border-bottom: 1px solid #25476B; flex-wrap: wrap; }
+    .board-head h1 { font-size: 22px; font-weight: 650; }
+    .board-head select { height: 36px; border-radius: 6px; border: 1px solid #3A5F85; background: #163A5E; color: #fff; padding: 0 10px; font: inherit; }
+    .board-clock { color: #9FB6CD; font-variant-numeric: tabular-nums; }
+    .board { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); padding: 28px 32px; }
+    .card { background: #163A5E; border: 1px solid #25476B; border-radius: 8px; padding: 20px 22px; }
+    .card .hosp { font-size: 13px; color: #9FB6CD; }
+    .card .doc { font-size: 18px; font-weight: 600; margin-top: 2px; }
+    .card .dept { font-size: 14px; color: #C5D5E5; }
+    .card .serving { font-size: 76px; font-weight: 650; line-height: 1.05; margin-top: 14px; font-variant-numeric: tabular-nums; }
+    .card .cap { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: #9FB6CD; }
+    .card .foot { display: flex; justify-content: space-between; margin-top: 14px; font-size: 14px; color: #C5D5E5; }
+    .chip { font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px; }
+    .chip.available { background: #1F5C37; color: #CDEFD8; }
+    .chip.busy { background: #6B4A0B; color: #F6E2B5; }
+    .chip.leave { background: #5E2620; color: #F3C9C4; }
+  </style>
+</head>
+<body>
+  <div class="board-head">
+    <h1>Now serving</h1>
+    <div class="row"><select id="hospital" aria-label="Hospital"><option value="">All hospitals</option></select><span class="board-clock" id="clock"></span></div>
+  </div>
+  <div class="board" id="board"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="i18n.js"></script>
+  <script>
+    var rows = [];
+    var select = document.getElementById('hospital');
+    var statusText = { available: 'Available', busy: 'With a patient', leave: 'On leave' };
+
+    function paint() {
+      var want = select.value;
+      var shown = rows.filter(function (r) { return !want || String(r.hospital_id) === want; });
+      document.getElementById('board').innerHTML = shown.map(function (r) {
+        return '<div class="card"><div class="hosp">' + esc(r.hospital_name) + '</div><div class="doc">' + esc(r.doctor_name) + '</div><div class="dept">' + esc(r.department) + '</div>' +
+          '<div class="serving">' + (r.serving || '\u2013') + '</div><div class="cap">Token</div>' +
+          '<div class="foot"><span>' + r.waiting + ' waiting</span><span class="chip ' + esc(r.status) + '">' + esc(statusText[r.status] || r.status) + '</span></div></div>';
+      }).join('');
+    }
+
+    async function load() {
+      var r = await api('GET', '/api/board');
+      if (!r.ok) return;
+      rows = r.data;
+      var known = {};
+      Array.prototype.forEach.call(select.options, function (o) { known[o.value] = true; });
+      rows.forEach(function (x) {
+        if (!known[x.hospital_id]) { known[x.hospital_id] = true; var o = document.createElement('option'); o.value = x.hospital_id; o.textContent = x.hospital_name; select.appendChild(o); }
+      });
+      paint();
+    }
+    select.onchange = paint;
+    setInterval(function () { document.getElementById('clock').textContent = new Date().toLocaleTimeString(); }, 1000);
+    load();
+    setInterval(load, 15000);
+    if (typeof io === 'function') {
+      var socket = io();
+      socket.on('connect', function () { socket.emit('subscribe', 'board'); });
+      socket.on('board:update', load);
+    }
+  </script>
+</body>
+</html>
