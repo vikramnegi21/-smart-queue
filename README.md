@@ -7,7 +7,7 @@
 ---
 
 ## 🎯 Project Overview
-CarePoint is a full-stack, real-time hospital queue management platform engineered to eliminate physical waiting lines, optimize clinical workflows, and deliver live status updates for patients and doctors.
+CarePoint is a full-stack, real-time hospital queue management platform engineered to eliminate physical waiting lines, optimize clinical workflows, and deliver live status updates for patients, doctors, and administrators.
 
 ---
 
@@ -15,11 +15,17 @@ CarePoint is a full-stack, real-time hospital queue management platform engineer
 
 ```mermaid
 flowchart TD
-    U[Patient / Doctor / Admin] -->|REST API Requests| API[Express.js Backend Server]
-    U <-->|Real-Time WebSocket Events| WS[Socket.IO Engine]
-    API --> AUTH[Session Auth & RBAC]
-    AUTH --> LOGIC[Queue Logic Layer]
-    LOGIC -->|Cache-Aside Read| REDIS[(Redis Memory Cache)]
-    REDIS -.->|Fallback on Cache Miss| SQL[(SQL Database / 3NF Schema)]
-    LOGIC -->|ACID Transactions| SQL
-    LOGIC -->|Emit Queue Updates| WS
+    Client[Patient / Doctor / Admin] -->|REST requests| API[Express.js API]
+    Client <-->|Real-time events| WS[Socket.IO]
+    API --> AUTH[Session Authentication and RBAC]
+    AUTH --> LOGIC[Queue and Appointment Logic]
+    
+    LOGIC -->|Cache-aside read| REDIS[(Redis Cache)]
+    REDIS -->|Cache hit| LOGIC
+    REDIS -.->|Cache miss or unavailable| SQL[(SQL Database)]
+    
+    LOGIC -->|Transactional writes| SQL
+    SQL -->|Result / commit| LOGIC
+    
+    LOGIC -->|Emit queue updates| WS
+    WS --> Client
