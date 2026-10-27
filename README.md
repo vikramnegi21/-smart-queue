@@ -7,67 +7,70 @@
 ---
 
 ## 🎯 Project Overview
-CarePoint is a full-stack, real-time hospital queue management platform engineered to eliminate physical waiting lines, optimize clinical workflows, and deliver live queue updates for patients and doctors.
+CarePoint is a full-stack, real-time hospital queue management platform engineered to eliminate physical waiting lines, optimize clinical workflows, and deliver live status updates for patients and doctors.
 
 ---
 
 ## 🏗️ System Architecture & Data Flow
 
 ```mermaid
-graph TD
-    Client[Patient / Display Board Client] <-->|WebSocket Events| WS[Socket.io Engine]
-    Client -->|REST API Requests| Server[Express.js Backend Server]
-    
-    subgraph Optimization Layer
-        Server -->|Cache-Aside Read| Redis[(Redis In-Memory Cache)]
-    end
+flowchart TD
+    U[Patient / Doctor / Admin] -->|REST API Requests| API[Express.js Backend Server]
+    U <-->|Real-Time WebSocket Events| WS[Socket.IO Engine]
+    API --> AUTH[Session Auth & RBAC]
+    AUTH --> LOGIC[Queue Logic Layer]
+    LOGIC -->|Cache-Aside Read| REDIS[(Redis Memory Cache)]
+    REDIS -.->|Fallback on Cache Miss| SQL[(SQL Database / 3NF Schema)]
+    LOGIC -->|ACID Transactions| SQL
+    LOGIC -->|Emit Queue Updates| WS
 
-    subgraph Data Layer
-        Server -->|ACID Transactions| DB[(SQL Database / 3NF Schema)]
-    end
+## ⚡ Key Engineering & Performance Metrics
 
-    Redis -.->|Fallback on Cache Miss| DB
-⚡ Key Engineering & Performance Metrics
-Metric / Architectural Feature	Traditional Approach	CarePoint Implementation	Measured Impact
-API Read Latency	~180ms (Direct Disk Read)	Redis In-Memory Caching	~25ms Latency (85% Faster)
-Database Read Traffic	100% Direct SQL Queries	Cache-aside strategy with automatic invalidation	85% DB Read Load Reduction
-Queue Synchronization	Client Polling / Manual Refresh	Event-driven WebSockets via Socket.io	Sub-second push updates
-Concurrency Protection	Vulnerable to race conditions	ACID SQL Transactions (BEGIN IMMEDIATE)	Zero duplicate token generation
-🛠️ Tech Stack
-Backend: Node.js, Express.js (RESTful APIs)
+| Metric / Feature | Traditional Approach | CarePoint Implementation | Measured Impact |
+| :--- | :--- | :--- | :--- |
+| **API Read Latency** | ~180ms (Direct Disk Read) | Redis In-Memory Caching | **~25ms Latency (85% Faster)** |
+| **Database Read Traffic** | 100% Direct SQL Queries | Cache-Aside Strategy with DB Fallback | **85% DB Read Load Reduction** |
+| **Queue Synchronization** | Client Polling / Refresh | Event-Driven WebSockets via Socket.io | **Sub-Second Push Updates** |
+| **Concurrency Protection** | Vulnerable to Race Conditions | ACID SQL Transactions & Unique Indexes | **Zero Duplicate Active Tokens** |
 
-Real-time Engine: Socket.io (WebSockets)
+---
 
-Caching Layer: Redis (Cache-aside strategy with DB fallback)
+## 🛠️ Tech Stack
 
-Database Engine: SQL (3NF Schema, Partial Unique Indexes, Triggers, Views)
+* **Backend API:** Node.js, Express.js (RESTful Endpoints)
+* **Real-Time Engine:** Socket.IO / WebSockets
+* **Caching Layer:** Redis (Cache-Aside Pattern)
+* **Database Engine:** SQL Database (3NF Schema, Partial Unique Indexes)
+* **Security & Auth:** Session Authentication, Role-Based Access Control (RBAC), bcrypt
+* **Testing:** Automated API Integration & Smoke Test Suite
 
-Security & Auth: Session Authentication, Role-Based Access Control (RBAC), bcrypt hashing
+---
 
-Testing: 56 Automated End-to-End API Integration Tests
+## 🔑 Core Features & Role Capabilities
 
-🔑 Core Features & Role Capabilities
-Patient Flow: Mobile token booking, live position tracking, dynamic estimated wait time calculation, multilingual support (EN / HI).
+* **Patient Portal:** Mobile token booking, live queue position tracking, dynamic estimated wait time calculation, and Hindi/English support.
+* **Doctor Dashboard:** Single-click patient calling workflow, real-time consultation tracking, active queue management.
+* **Admin Analytics & TV Board:** Hospital-wide throughput analytics, doctor allocation, and dedicated waiting-room display page (`/display.html`).
 
-Doctor Dashboard: Single-click patient calling workflow, real-time consultation duration tracking, active queue management.
+---
 
-Admin Analytics & TV Board: Hospital-wide throughput analytics, doctor allocation, and dedicated waiting-room display page (/display.html).
+## 🔒 Security & Data Integrity
 
-🔒 Security & Data Integrity
-Role-Based Access Control (RBAC): Strict session isolation preventing unauthorized cross-tenant queue access. Doctor endpoints validate server sessions rather than trusting client parameters.
+1. **Role-Based Access Control (RBAC):** Strict session-based access prevention protecting cross-tenant queue actions.
+2. **Database-Level Integrity:** Partial unique indexes (`ux_one_live_token_per_patient`) strictly enforce a limit of 1 active token per patient.
+3. **Resilient Failover:** Automatic fallback to direct database queries if the Redis caching layer is offline or unavailable.
 
-Database Level Rules: Partial unique indexes (ux_one_live_token_per_patient) enforce a strict limit of 1 active token per patient directly at the database layer.
+---
 
-Resilient Failover: Automatic fallback to direct database queries if the Redis caching layer goes offline, ensuring uninterrupted availability.
+## 📁 Repository Structure
 
-📁 Repository Structure
-Plaintext
+```text
 backend/
-├── server.js          # Express app, REST endpoints, Socket.io event handlers
-├── db.js              # Data Access Layer (DAL) & ACID transaction logic
-├── cache.js           # Redis caching module with DB fallback
-├── sql/schema.sql     # DDL: 3NF tables, partial indexes, triggers, and views
-└── test/smoke.js      # Automated E2E API test suite
+├── server.js          # Express app, REST endpoints, Socket.IO handlers
+├── db.js              # Data-access layer and ACID transaction logic
+├── cache.js           # Redis cache module with database fallback
+├── sql/schema.sql     # DDL: 3NF tables, indexes, triggers, and views
+└── test/smoke.js      # Automated API integration/smoke tests
 docs/
 ├── ER_diagram.svg     # Normalized Entity-Relationship Architecture
-└── queries.sql        # Complex SQL analytics queries & execution plans
+└── queries.sql        # Complex SQL analytics queries
