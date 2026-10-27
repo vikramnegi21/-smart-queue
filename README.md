@@ -7,6 +7,12 @@ administrator manages doctor accounts and sees analytics.
 
 Built for a DBMS course: the data model, constraints, triggers, views, transactions and SQL are the core
 of the project (see "DBMS content" below).
+# 🏥 CarePoint - Smart Hospital Queue Management System
+
+![Live Demo](https://img.shields.io/badge/Status-Live-brightgreen)
+[![Live App](https://img.shields.io/badge/Live--Demo-Click%20Here-blue?style=for-the-badge&logo=render)](https://smart-queue-zjez.onrender.com)
+
+> 🔗 **Live URL:** [https://smart-queue-zjez.onrender.com](https://smart-queue-zjez.onrender.com)
 
 ## Run it
 
@@ -18,7 +24,7 @@ npm install
 npm start
 ```
 
-Open http://localhost:3000
+
 
 | Command              | What it does                                                          |
 |----------------------|-----------------------------------------------------------------------|
