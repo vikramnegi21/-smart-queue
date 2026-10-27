@@ -1,62 +1,33 @@
-# 🏥 CarePoint - Smart Hospital Queue Management System
+# 🏥 CarePoint - Enterprise Smart Hospital Queue & Real-Time Flow System
 
-![Status](https://img.shields.io/badge/Status-Live-brightgreen)
+![Status](![Status](https://img.shields.io/badge/Status-Production%20Live-brightgreen?style=flat-square))
+![NodeJS](https://img.shields.io/badge/Node.js-v22.x-green?logo=nodedotjs&style=flat-square)
+![Redis](https://img.shields.io/badge/Redis-Caching-red?logo=redis&style=flat-square)
+![Socket.io](https://img.shields.io/badge/Socket.io-WebSockets-black?logo=socketdotio&style=flat-square)
 [![Live Demo](https://img.shields.io/badge/Live--Demo-Click%20Here-blue?style=for-the-badge&logo=render)](https://smart-queue-zjez.onrender.com)
 
-> 🔗 **Live Application URL:** [https://smart-queue-zjez.onrender.com](https://smart-queue-zjez.onrender.com)
+> 🔗 **Live Production URL:** [https://smart-queue-zjez.onrender.com](https://smart-queue-zjez.onrender.com)
 
 ---
 
-## 🚀 Overview
-CarePoint is a full-stack real-time hospital queue management web application designed to digitize patient waiting lines, reduce counter overcrowding, and streamline clinical workflows. 
-
-Patients can track live token progression and estimated wait times from their mobile devices, while doctors manage active queues, and administrators monitor operational analytics across departments.
+## 🎯 Executive Summary
+CarePoint is a full-stack, high-throughput hospital queue management platform engineered to eliminate physical waiting lines, optimize clinical workflows, and deliver real-time patient status synchronization. Designed with an emphasis on low-latency data retrieval and strict data integrity under concurrent traffic.
 
 ---
 
-## ⚡ Key Performance & Architecture Highlights
+## 🏗️ System Architecture & Data Flow
 
-| Metric / Architecture Feature | Implementation Details | Impact |
-| :--- | :--- | :--- |
-| **API Latency Reduction** | Redis RAM Caching ($O(1)$) | **~180ms $\rightarrow$ ~25ms (85% Faster)** |
-| **DB Load Optimization** | Cache-aside strategy for queue read traffic | **85% Database Read Load Reduction** |
-| **Real-time Synchronization** | WebSockets via Socket.io | **Instant status push without polling** |
-| **Data Integrity & Concurrency** | Partial unique indexes & ACID transactions | **Zero duplicate token generation under traffic** |
+```mermaid
+graph TD
+    Client[Patient / Display Board Client] -->|WebSocket Events| WS[Socket.io Engine]
+    Client -->|REST API Calls| Server[Express.js Backend Server]
+    
+    subgraph Optimization Layer
+        Server -->|Cache-Aside Read O(1)| Redis[(Redis In-Memory Cache)]
+    end
 
----
+    subgraph Persistence Layer
+        Server -->|ACID Transactions| DB[(SQL Database / 3NF Schema)]
+    end
 
-## 🛠️ Tech Stack & Key Features
-
-* **Backend:** Node.js, Express.js, RESTful APIs
-* **Real-time Engine:** Socket.io (WebSockets)
-* **Caching Layer:** Redis (Cache-aside strategy with DB fallback)
-* **Database Engine:** SQL (3NF Normalized Schema, Partial Unique Indexes, Views, Triggers)
-* **Security & Auth:** Session Authentication, Role-Based Access Control (RBAC), bcrypt hashing, Rate Limiting
-* **Frontend:** Responsive Web Interface (Vanilla JS / Modern CSS), Internationalization (EN / HI)
-
-### Core Workflow Features
-* **Patient Portal:** Mobile-first token booking, real-time queue position tracking, automated status notifications, feedback rating system.
-* **Doctor Dashboard:** Secure queue management, single-click patient calling workflow, consult duration tracking.
-* **Admin Analytics & Display:** Real-time waiting room TV display board (`/display.html`), department throughput metrics, doctor allocation management.
-
----
-
-## 🔒 Security & Data Integrity
-* **Role-Based Access Control (RBAC):** Strict session isolation preventing unauthorized cross-tenant queue access.
-* **Concurrency Protection:** Concurrency-safe SQL transactions (`BEGIN IMMEDIATE`) prevent race conditions during peak booking windows.
-* **Database Rules:** Enforced partial unique indexes (`ux_one_live_token_per_patient`) ensuring a patient cannot hold multiple active tokens simultaneously.
-
----
-
-## 💻 Local Setup & Installation
-
-### Prerequisites
-* **Node.js:** `v22.x` or higher
-* **Redis:** Optional (Application gracefully falls back to direct DB queries if Redis is offline)
-
-### Steps
-
-1. **Clone the Repository:**
-   ```bash
-   git clone [https://github.com/vikramnegi21/-smart-queue.git](https://github.com/vikramnegi21/-smart-queue.git)
-   cd -smart-queue/backend
+    Redis -.->|Fallback on Miss| DB
